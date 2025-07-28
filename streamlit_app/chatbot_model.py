@@ -1,34 +1,75 @@
+# streamlit_app/chatbot_model.py
+
+import os
 import pickle
+import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-def train_and_save_model():
-    X = [
-        "I want SEO services",
-        "Help with Instagram Ads",
-        "Grow my website traffic",
-        "How much do you charge?",
-        "I need blog writers"
-    ]
-    y = ["SEO", "Social Media", "SEO", "Pricing", "Content Marketing"]
+# Sample training data (customize if needed)
+X_train = [
+    "I want help with SEO",
+    "Need social media marketing",
+    "How much do you charge?",
+    "I want to increase traffic",
+    "Can you manage Instagram?",
+    "Write blog posts for me",
+    "Help with ad campaigns",
+    "Tell me your pricing",
+]
+y_train = [
+    "SEO",
+    "Social Media",
+    "Pricing",
+    "SEO",
+    "Social Media",
+    "Content Marketing",
+    "Advertising",
+    "Pricing"
+]
 
+MODEL_PATH = "streamlit_app/intent_model.pkl"
+VECTORIZER_PATH = "streamlit_app/vectorizer.pkl"
+
+# Train and save model if not exists
+def train_and_save():
     vectorizer = TfidfVectorizer()
-    X_vec = vectorizer.fit_transform(X)
+    X_vectorized = vectorizer.fit_transform(X_train)
 
     model = LogisticRegression()
-    model.fit(X_vec, y)
+    model.fit(X_vectorized, y_train)
 
-    # Save model inside the deployed app folder
-    with open("streamlit_app/intent_model.pkl", "wb") as f:
+    with open(MODEL_PATH, "wb") as f:
         pickle.dump(model, f)
-    with open("streamlit_app/vectorizer.pkl", "wb") as f:
+    with open(VECTORIZER_PATH, "wb") as f:
         pickle.dump(vectorizer, f)
 
-# Only do this if model files don't already exist (avoid overwriting every time)
-import os
-if not os.path.exists("intent_model.pkl"):
-    train_and_save_model()
+# Train if model not found
+if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
+    train_and_save()
 
-# Now load it as usual
-model = pickle.load(open("streamlit_app/intent_model.pkl", "rb"))
-vectorizer = pickle.load(open("streamlit_app/vectorizer.pkl", "rb"))
+# Load model
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+with open(VECTORIZER_PATH, "rb") as f:
+    vectorizer = pickle.load(f)
+
+# Streamlit UI
+st.title("🧠 Digital Marketing Chatbot")
+
+user_input = st.text_input("Ask me anything about our marketing services:")
+
+if user_input:
+    user_vec = vectorizer.transform([user_input])
+    prediction = model.predict(user_vec)[0]
+
+    responses = {
+        "SEO": "We offer full SEO services to rank your site on Google.",
+        "Social Media": "We can manage your Instagram, Facebook, and more.",
+        "Pricing": "Our pricing depends on services. Contact us for a quote.",
+        "Content Marketing": "We write blogs, articles, and email content.",
+        "Advertising": "We run ads on Google, Facebook, Instagram, and more.",
+    }
+
+    st.write("🤖 Chatbot:")
+    st.success(responses.get(prediction, "Sorry, I didn't understand. Please rephrase."))
