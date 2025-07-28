@@ -30,5 +30,5 @@ if not os.path.exists("intent_model.pkl"):
     train_and_save_model()
 
 # Now load it as usual
-model = pickle.load(open("intent_model.pkl", "rb"))
-vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+model = pickle.load(open("streamlit_app/intent_model.pkl", "rb"))
+vectorizer = pickle.load(open("streamlit_app/vectorizer.pkl", "rb"))
