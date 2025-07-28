@@ -1,19 +1,34 @@
 import pickle
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 
-# Load
-model = pickle.load(open("streamlit_app/intent_model.pkl", "rb"))
-vectorizer = pickle.load(open("streamlit_app/vectorizer.pkl", "rb"))
+def train_and_save_model():
+    X = [
+        "I want SEO services",
+        "Help with Instagram Ads",
+        "Grow my website traffic",
+        "How much do you charge?",
+        "I need blog writers"
+    ]
+    y = ["SEO", "Social Media", "SEO", "Pricing", "Content Marketing"]
 
-# Responses
-intent_to_response = {
-    "SEO": "We provide SEO services to improve your Google rankings.",
-    "Social Media": "We can help you grow on Instagram, Facebook, and more.",
-    "Pricing": "Our plans start at ₹10,000/month. Want a custom quote?",
-    "Content Marketing": "We offer blog writing, newsletters, and more!"
-}
+    vectorizer = TfidfVectorizer()
+    X_vec = vectorizer.fit_transform(X)
 
-def get_bot_response(user_input):
-    vec = vectorizer.transform([user_input])
-    intent = model.predict(vec)[0]
-    return intent_to_response.get(intent, "Sorry, I didn't understand. Can you try again?")
+    model = LogisticRegression()
+    model.fit(X_vec, y)
 
+    # Save model inside the deployed app folder
+    with open("streamlit_app/intent_model.pkl", "wb") as f:
+        pickle.dump(model, f)
+    with open("streamlit_app/vectorizer.pkl", "wb") as f:
+        pickle.dump(vectorizer, f)
+
+# Only do this if model files don't already exist (avoid overwriting every time)
+import os
+if not os.path.exists("intent_model.pkl"):
+    train_and_save_model()
+
+# Now load it as usual
+model = pickle.load(open("intent_model.pkl", "rb"))
+vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
